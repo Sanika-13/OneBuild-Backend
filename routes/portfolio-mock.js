@@ -1,11 +1,50 @@
 const express = require('express');
 const router = express.Router();
 const { nanoid } = require('nanoid');
+const Portfolio = require('../models/Portfolio');
+const User = require('../models/User');
 
-// Create portfolio (using mock DB)
-router.post('/create', async (req, res) => {
+// Middleware to check auth (Basic version)
+const protect = async (req, res, next) => {
+  let token;
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    try {
+      token = req.headers.authorization.split(' ')[1];
+
+      // Since we used `token-${user._id}` as a simple token
+      const userId = token.replace('token-', '');
+      req.user = await User.findById(userId); // Verify user exists
+
+      if (!req.user) {
+        return res.status(401).json({ message: 'Not authorized, user not found' });
+      }
+
+      next();
+    } catch (error) {
+      console.error(error);
+      res.status(401).json({ message: 'Not authorized' });
+    }
+  } else {
+    res.status(401).json({ message: 'Not authorized, no token' });
+  }
+};
+
+// Create portfolio (Real DB)
+router.post('/create', protect, async (req, res) => {
   try {
     const {
+      name, about, profileImage, skills, projects, achievements,
+      experience, socialLinks, theme
+    } = req.body;
+
+    console.log('💼 Creating portfolio for user:', req.user._id);
+
+    // Generate unique URL
+    const uniqueUrl = nanoid(10);
+
+    const portfolio = await Portfolio.create({
+      userId: req.user._id,
+      uniqueUrl,
       name,
       about,
       profileImage,
@@ -14,91 +53,34 @@ router.post('/create', async (req, res) => {
       achievements,
       experience,
       socialLinks,
-      theme
-    } = req.body;
+      theme,
+      isPublished: true
+    });
 
-    console.log('💼 Creating portfolio...');
-
-    // Generate unique URL
-    const uniqueUrl = nanoid(10);
-
-    const portfolio = {
-      id: Date.now().toString(),
-      uniqueUrl,
-      name,
-      about,
-      profileImage: profileImage || null,
-      skills: skills || [],
-      projects: projects || [],
-      achievements: achievements || [],
-      experience: experience || [],
-      socialLinks: socialLinks || {},
-      theme: theme || 'dark',
-      isPublished: true, // Auto-publish
-      createdAt: new Date()
-    };
-
-    // Store in mock DB
-    global.mockDB.portfolios.push(portfolio);
-
-    console.log('✅ Portfolio created with uniqueUrl:', uniqueUrl);
-    console.log('📊 Total portfolios in DB:', global.mockDB.portfolios.length);
+    console.log('✅ Portfolio created:', uniqueUrl);
 
     res.json({
       message: 'Portfolio created successfully',
       portfolio: {
-        id: portfolio.id,
+        id: portfolio._id,
         uniqueUrl: portfolio.uniqueUrl,
         theme: portfolio.theme,
         isPublished: portfolio.isPublished
       }
     });
   } catch (error) {
+    console.error('Error creating portfolio:', error);
     res.status(500).json({ message: 'Error creating portfolio', error: error.message });
   }
 });
 
-// Publish portfolio
-router.post('/publish', async (req, res) => {
-  try {
-    const { portfolioId } = req.body;
-
-    // Find portfolio in mock DB
-    const portfolio = global.mockDB.portfolios.find(p => p.id === portfolioId || p.uniqueUrl === portfolioId);
-
-    if (!portfolio) {
-      // If no specific ID, publish the last created portfolio
-      const lastPortfolio = global.mockDB.portfolios[global.mockDB.portfolios.length - 1];
-      if (lastPortfolio) {
-        lastPortfolio.isPublished = true;
-        return res.json({
-          message: 'Portfolio published successfully',
-          portfolioUrl: `http://localhost:3000/p/${lastPortfolio.uniqueUrl}`
-        });
-      }
-      return res.status(404).json({ message: 'Portfolio not found' });
-    }
-
-    portfolio.isPublished = true;
-
-    res.json({
-      message: 'Portfolio published successfully',
-      portfolioUrl: `http://localhost:3000/p/${portfolio.uniqueUrl}`
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Error publishing portfolio', error: error.message });
-  }
-});
-
-// Get portfolio by unique URL (for public viewing)
+// Get portfolio by unique URL (Public)
 router.get('/:uniqueUrl', async (req, res) => {
   try {
-    const portfolio = global.mockDB.portfolios.find(
-      p => p.uniqueUrl === req.params.uniqueUrl
-    );
+    const portfolio = await Portfolio.findOne({ uniqueUrl: req.params.uniqueUrl });
 
     if (!portfolio) {
-      return res.status(404).json({ message: 'Portfolio not found or not published' });
+      return res.status(404).json({ message: 'Portfolio not found' });
     }
 
     res.json(portfolio);
@@ -107,25 +89,13 @@ router.get('/:uniqueUrl', async (req, res) => {
   }
 });
 
-// Get all portfolios (for admin)
+// Get all portfolios (Debug/Admin)
 router.get('/', async (req, res) => {
   try {
-    res.json(global.mockDB.portfolios);
+    const portfolios = await Portfolio.find().sort({ createdAt: -1 });
+    res.json(portfolios);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching portfolios', error: error.message });
-  }
-});
-
-// Debug endpoint - get last portfolio
-router.get('/debug/last', async (req, res) => {
-  try {
-    const lastPortfolio = global.mockDB.portfolios[global.mockDB.portfolios.length - 1];
-    res.json({
-      total: global.mockDB.portfolios.length,
-      lastPortfolio: lastPortfolio || null
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Error', error: error.message });
   }
 });
 

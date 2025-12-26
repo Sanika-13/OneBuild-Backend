@@ -3,13 +3,25 @@ const cors = require("cors");
 
 const app = express();
 
-// In-Memory Database (Mock)
-global.mockDB = {
-  users: [],
-  portfolios: []
+// Connect to MongoDB
+const mongoose = require("mongoose");
+const connectDB = async () => {
+  try {
+    // Determine the URI: use env var if persistent, otherwise warn (or fail if critical)
+    const conn = await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+  } catch (error) {
+    console.error(`❌ Error connecting to MongoDB: ${error.message}`);
+    // Don't exit process in serverless environment, but log error
+  }
 };
+connectDB();
 
-console.log("✅ Using In-Memory Mock Database");
+// Removed In-Memory Mock Database
+
 
 // Middleware
 app.use(cors());

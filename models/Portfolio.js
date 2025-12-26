@@ -11,53 +11,48 @@ const portfolioSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  name: {
+    type: String,
+    required: true
+  },
+  about: {
+    type: String,
+    required: true
+  },
+  profileImage: {
+    type: String
+  },
   theme: {
     type: String,
-    enum: ['dark', 'minimalist', 'modern'],
-    default: 'minimalist'
+    default: 'dark'
   },
-  resumeData: {
+  skills: [String],
+  projects: [{
     name: String,
+    description: String,
+    technologies: String,
+    link: String
+  }],
+  achievements: [String],
+  experience: [{
+    title: String,
+    company: String,
+    duration: String,
+    description: String
+  }],
+  socialLinks: {
     email: String,
     phone: String,
-    bio: String,
-    education: [{
-      degree: String,
-      institution: String,
-      year: String,
-      score: String
-    }],
-    experience: [{
-      title: String,
-      company: String,
-      duration: String,
-      description: String
-    }],
-    skills: [String],
-    projects: [{
-      name: String,
-      description: String,
-      technologies: [String],
-      link: String
-    }],
-    achievements: [String]
-  },
-  socialLinks: {
+    countryCode: String,
     github: String,
     linkedin: String,
-    instagram: String,
-    whatsapp: String,
-    other: String
+    instagram: String
   },
   isPublished: {
     type: Boolean,
-    default: false
+    default: true
   },
   createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
     type: Date,
     default: Date.now
   }
