@@ -20,6 +20,7 @@ app.use("/uploads", express.static("uploads"));
 // Routes
 app.use("/api/resume", require("./routes/resume"));
 app.use("/api/portfolio", require("./routes/portfolio-mock"));
+app.use("/api/auth", require("./routes/auth"));
 app.use("/p", require("./routes/portfolio-mock"));
 
 app.get("/", (req, res) => {

@@ -1,96 +1,57 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
 
-// Register
-router.post('/register', async (req, res) => {
-  try {
-    const { name, email, password, role } = req.body;
+// Register User
+router.post('/register', (req, res) => {
+  const { name, email, password } = req.body;
 
-    // Check if user exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
-
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Create user
-    const user = new User({
-      name,
-      email,
-      password: hashedPassword,
-      role: role || 'student'
-    });
-
-    await user.save();
-
-    // Create token
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    res.status(201).json({
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+  if (!name || !email || !password) {
+    return res.status(400).json({ error: 'All fields are required' });
   }
+
+  // Check if user already exists
+  const userExists = global.mockDB.users.find(u => u.email === email);
+  if (userExists) {
+    return res.status(400).json({ error: 'User already exists' });
+  }
+
+  // Create new user
+  const newUser = {
+    id: Date.now().toString(),
+    name,
+    email,
+    password // In a real app, hash this password!
+  };
+
+  global.mockDB.users.push(newUser);
+  console.log('✅ New User Registered:', newUser);
+
+  res.status(201).json({ message: 'Registration successful', user: { id: newUser.id, name: newUser.name, email: newUser.email } });
 });
 
-// Login
-router.post('/login', async (req, res) => {
-  try {
-    const { email, password, role } = req.body;
+// Login User
+router.post('/login', (req, res) => {
+  const { name, password } = req.body; // Accepting 'name' as username for simplicity, or email
 
-    // Check user exists
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
-
-    // Check role matches
-    if (user.role !== role) {
-      return res.status(400).json({ message: 'Invalid credentials for this role' });
-    }
-
-    // Verify password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
-
-    // Create token
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    res.json({
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+  if (!name || !password) {
+    return res.status(400).json({ error: 'All fields are required' });
   }
+
+  // Find user by name (or email if you prefer)
+  const user = global.mockDB.users.find(u => u.name === name || u.email === name);
+
+  if (!user || user.password !== password) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+
+  console.log('✅ User Logged In:', user.name);
+
+  // Return success with a mock token
+  res.json({
+    message: 'Login successful',
+    token: `mock-token-${user.id}`,
+    user: { id: user.id, name: user.name, email: user.email }
+  });
 });
 
 module.exports = router;
