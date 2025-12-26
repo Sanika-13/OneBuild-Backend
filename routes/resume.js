@@ -2,19 +2,21 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = 'uploads/resumes';
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
+cloudinary.config({
+  cloud_name: 'dceofncr5',
+  api_key: '916973651243259',
+  api_secret: 'z9iPJdWQEi1zmRmLiMSvMdJ1NWI'
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'onebuild_resumes',
+    allowed_formats: ['jpg', 'png', 'jpeg'],
   },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
 });
 
 const upload = multer({
@@ -36,12 +38,12 @@ router.post('/upload-image', upload.single('image'), (req, res) => {
       return res.status(400).json({ error: 'No image uploaded' });
     }
 
-    console.log('✅ Profile Image uploaded:', req.file.filename);
+    console.log('✅ Profile Image uploaded to Cloudinary:', req.file.path);
 
     res.json({
       message: 'Image uploaded successfully',
       filename: req.file.filename,
-      path: `/uploads/resumes/${req.file.filename}`
+      path: req.file.path
     });
   } catch (error) {
     console.error('Error uploading image:', error);
