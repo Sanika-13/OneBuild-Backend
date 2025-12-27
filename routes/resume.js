@@ -15,12 +15,19 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    const isDocument = ['.pdf', '.doc', '.docx'].includes(ext);
+
+    // Changing logic: PDF is treated as 'image' so it can be viewed inline.
+    // DOC/DOCX must be 'raw' to avoid corruption.
+    let resourceType = 'image';
+    if (['.doc', '.docx'].includes(ext)) {
+      resourceType = 'raw';
+    }
 
     return {
       folder: 'onebuild_resumes',
-      resource_type: isDocument ? 'raw' : 'image', // Docs as 'raw', Images as 'image'
-      public_id: path.parse(file.originalname).name + '-' + Date.now(), // Unique ID
+      allowed_formats: ['jpg', 'png', 'jpeg', 'pdf', 'doc', 'docx'],
+      resource_type: resourceType,
+      public_id: path.parse(file.originalname).name + '-' + Date.now(),
     };
   },
 });
