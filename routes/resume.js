@@ -27,7 +27,7 @@ const storage = new CloudinaryStorage({
       folder: 'onebuild_resumes',
       allowed_formats: ['jpg', 'png', 'jpeg', 'pdf', 'doc', 'docx'],
       resource_type: resourceType,
-      public_id: path.parse(file.originalname).name + '-' + Date.now(),
+      public_id: path.parse(file.originalname).name + '-' + Date.now() + ext,
     };
   },
 });
