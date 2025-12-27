@@ -16,11 +16,17 @@ const storage = new CloudinaryStorage({
   params: async (req, file) => {
     const ext = path.extname(file.originalname).toLowerCase();
 
-    // Use 'auto' to let Cloudinary detect the file type (PDFs become viewable images/docs, DOCs become raw).
-    // We append the extension to public_id to ensure the filename is correct for download/viewing.
+    // STRICT FIX: Always use 'raw' for documents. This prevents Cloudinary from attempting 
+    // to convert PDFs to images, which was causing the "Failed to load" error.
+    let resourceType = 'image';
+    if (['.pdf', '.doc', '.docx'].includes(ext)) {
+      resourceType = 'raw';
+    }
+
     return {
       folder: 'onebuild_resumes',
-      resource_type: 'auto',
+      resource_type: resourceType,
+      // Ensure single extension in filename
       public_id: path.parse(file.originalname).name + '-' + Date.now() + ext,
     };
   },
