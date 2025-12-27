@@ -19,24 +19,18 @@ const storage = new CloudinaryStorage({
     // Sanitize filename: Remove special chars, spaces, parens. Alphanumeric + underscores only.
     const cleanName = path.parse(file.originalname).name.replace(/[^a-zA-Z0-9]/g, '_');
 
-    let resourceType = 'auto';
-    let publicId = cleanName + '-' + Date.now();
+    // UNIVERSAL ROBUST CONFIG:
+    // 1. resource_type: 'raw' -> Never modify/corrupt the file data.
+    // 2. public_id + ext -> Ensure URL ends in .pdf/.doc so browsers handle it correctly.
+    // 3. cleanName -> Ensure URL contains no special characters that break links.
 
-    // SPECIAL LOGIC:
-    // PDF: Treat as 'image' for inline viewing. DO NOT add extension to public_id (Cloudinary adds it).
-    // DOC/DOCX: Treat as 'raw' for download. MUST add extension to public_id (so URL has it).
-    if (ext === '.pdf') {
-      resourceType = 'image';
-      publicId = cleanName + '-' + Date.now(); // No extension
-    } else if (['.doc', '.docx'].includes(ext)) {
-      resourceType = 'raw';
-      publicId = cleanName + '-' + Date.now() + ext; // With extension
-    }
+    let resourceType = 'raw';
+    // We use 'raw' for everything. Browsers generally open .pdf inline if the URL ends in .pdf.
 
     return {
       folder: 'onebuild_resumes',
       resource_type: resourceType,
-      public_id: publicId,
+      public_id: cleanName + '-' + Date.now() + ext, // Always include extension for raw files
     };
   },
 });
