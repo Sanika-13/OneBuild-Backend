@@ -34,15 +34,18 @@ router.post('/create', protect, async (req, res) => {
   try {
     const {
       name, about, profileImage, skills, projects, achievements,
-      experience, socialLinks, theme
+      experience, socialLinks, theme, resume, stats
     } = req.body;
 
-    console.log('💼 Creating portfolio for user:', req.user._id);
+    console.log('💼 Creating/Updating portfolio for user:', req.user._id);
 
-    // Generate unique URL
-    const uniqueUrl = nanoid(10);
+    // Check if portfolio exists
+    let portfolio = await Portfolio.findOne({ userId: req.user._id });
 
-    const portfolio = await Portfolio.create({
+    // Generate unique URL if new
+    const uniqueUrl = portfolio ? portfolio.uniqueUrl : nanoid(10);
+
+    const portfolioData = {
       userId: req.user._id,
       uniqueUrl,
       name,
@@ -54,13 +57,27 @@ router.post('/create', protect, async (req, res) => {
       experience,
       socialLinks,
       theme,
+      resume,
+      stats,
       isPublished: true
-    });
+    };
 
-    console.log('✅ Portfolio created:', uniqueUrl);
+    if (portfolio) {
+      // Update
+      portfolio = await Portfolio.findOneAndUpdate(
+        { userId: req.user._id },
+        portfolioData,
+        { new: true }
+      );
+    } else {
+      // Create
+      portfolio = await Portfolio.create(portfolioData);
+    }
+
+    console.log('✅ Portfolio saved:', uniqueUrl);
 
     res.json({
-      message: 'Portfolio created successfully',
+      message: 'Portfolio saved successfully',
       portfolio: {
         id: portfolio._id,
         uniqueUrl: portfolio.uniqueUrl,
@@ -69,7 +86,7 @@ router.post('/create', protect, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error creating portfolio:', error);
+    console.error('Error in portfolio create/update:', error);
     res.status(500).json({ message: 'Error creating portfolio', error: error.message });
   }
 });
