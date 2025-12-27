@@ -4,16 +4,19 @@ const { nanoid } = require('nanoid');
 const Portfolio = require('../models/Portfolio');
 const User = require('../models/User');
 
-// Middleware to check auth (Basic version)
 const protect = async (req, res, next) => {
   let token;
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
       token = req.headers.authorization.split(' ')[1];
+      console.log('🔒 Auth Middleware - Received Token:', token);
 
       // Since we used `token-${user._id}` as a simple token
       const userId = token.replace('token-', '');
+      console.log('🔒 Auth Middleware - Extracted UserID:', userId);
+
       req.user = await User.findById(userId); // Verify user exists
+      console.log('🔒 Auth Middleware - User Found:', req.user ? 'Yes' : 'No');
 
       if (!req.user) {
         return res.status(401).json({ message: 'Not authorized, user not found' });
@@ -21,10 +24,11 @@ const protect = async (req, res, next) => {
 
       next();
     } catch (error) {
-      console.error(error);
-      res.status(401).json({ message: 'Not authorized' });
+      console.error('🔒 Auth Middleware - Error:', error);
+      res.status(401).json({ message: 'Not authorized', error: error.message });
     }
   } else {
+    console.log('🔒 Auth Middleware - No Token/Bearer Header:', req.headers.authorization);
     res.status(401).json({ message: 'Not authorized, no token' });
   }
 };
