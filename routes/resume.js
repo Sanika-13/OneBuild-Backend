@@ -16,18 +16,13 @@ const storage = new CloudinaryStorage({
   params: async (req, file) => {
     const ext = path.extname(file.originalname).toLowerCase();
 
-    // STRICT FIX: Always use 'raw' for documents. This prevents Cloudinary from attempting 
-    // to convert PDFs to images, which was causing the "Failed to load" error.
-    let resourceType = 'image';
-    if (['.pdf', '.doc', '.docx'].includes(ext)) {
-      resourceType = 'raw';
-    }
+    // Sanitize filename: Remove special chars, spaces, parens. Alphanumeric + underscores only.
+    const cleanName = path.parse(file.originalname).name.replace(/[^a-zA-Z0-9]/g, '_');
 
     return {
       folder: 'onebuild_resumes',
-      resource_type: resourceType,
-      // Ensure single extension in filename
-      public_id: path.parse(file.originalname).name + '-' + Date.now() + ext,
+      resource_type: 'auto', // Let Cloudinary handle PDF as viewable (image type internally) or raw
+      public_id: cleanName + '-' + Date.now() + ext, // Clean ID for safe URL
     };
   },
 });
