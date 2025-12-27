@@ -16,17 +16,11 @@ const storage = new CloudinaryStorage({
   params: async (req, file) => {
     const ext = path.extname(file.originalname).toLowerCase();
 
-    // BACK TO RAW: 'image' type caused corruption for PDFs.
-    // 'raw' ensures the file is stored exactly as uploaded (safe).
-    let resourceType = 'image';
-    if (['.pdf', '.doc', '.docx'].includes(ext)) {
-      resourceType = 'raw';
-    }
-
+    // Use 'auto' to let Cloudinary detect the file type (PDFs become viewable images/docs, DOCs become raw).
+    // We append the extension to public_id to ensure the filename is correct for download/viewing.
     return {
       folder: 'onebuild_resumes',
-      allowed_formats: ['jpg', 'png', 'jpeg', 'pdf', 'doc', 'docx'],
-      resource_type: resourceType,
+      resource_type: 'auto',
       public_id: path.parse(file.originalname).name + '-' + Date.now() + ext,
     };
   },
