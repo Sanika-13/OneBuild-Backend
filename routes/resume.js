@@ -16,10 +16,10 @@ const storage = new CloudinaryStorage({
   params: async (req, file) => {
     const ext = path.extname(file.originalname).toLowerCase();
 
-    // Changing logic: PDF is treated as 'image' so it can be viewed inline.
-    // DOC/DOCX must be 'raw' to avoid corruption.
+    // BACK TO RAW: 'image' type caused corruption for PDFs.
+    // 'raw' ensures the file is stored exactly as uploaded (safe).
     let resourceType = 'image';
-    if (['.doc', '.docx'].includes(ext)) {
+    if (['.pdf', '.doc', '.docx'].includes(ext)) {
       resourceType = 'raw';
     }
 
