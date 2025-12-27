@@ -13,10 +13,15 @@ cloudinary.config({
 
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: 'onebuild_resumes',
-    allowed_formats: ['jpg', 'png', 'jpeg', 'pdf', 'doc', 'docx'],
-    resource_type: 'auto' // Important for non-image files
+  params: async (req, file) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const isDocument = ['.pdf', '.doc', '.docx'].includes(ext);
+
+    return {
+      folder: 'onebuild_resumes',
+      resource_type: isDocument ? 'raw' : 'image', // Docs as 'raw', Images as 'image'
+      public_id: path.parse(file.originalname).name + '-' + Date.now(), // Unique ID
+    };
   },
 });
 
