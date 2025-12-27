@@ -19,10 +19,24 @@ const storage = new CloudinaryStorage({
     // Sanitize filename: Remove special chars, spaces, parens. Alphanumeric + underscores only.
     const cleanName = path.parse(file.originalname).name.replace(/[^a-zA-Z0-9]/g, '_');
 
+    let resourceType = 'auto';
+    let publicId = cleanName + '-' + Date.now();
+
+    // SPECIAL LOGIC:
+    // PDF: Treat as 'image' for inline viewing. DO NOT add extension to public_id (Cloudinary adds it).
+    // DOC/DOCX: Treat as 'raw' for download. MUST add extension to public_id (so URL has it).
+    if (ext === '.pdf') {
+      resourceType = 'image';
+      publicId = cleanName + '-' + Date.now(); // No extension
+    } else if (['.doc', '.docx'].includes(ext)) {
+      resourceType = 'raw';
+      publicId = cleanName + '-' + Date.now() + ext; // With extension
+    }
+
     return {
       folder: 'onebuild_resumes',
-      resource_type: 'auto', // Let Cloudinary handle PDF as viewable (image type internally) or raw
-      public_id: cleanName + '-' + Date.now() + ext, // Clean ID for safe URL
+      resource_type: resourceType,
+      public_id: publicId,
     };
   },
 });
