@@ -26,14 +26,25 @@ const portfolioSchema = new mongoose.Schema({
     type: String,
     default: 'dark'
   },
+  resume: String,
+  stats: {
+    yearsOfExperience: String,
+    projectsCompleted: String,
+    internshipsCompleted: String,
+    totalSkills: String
+  },
   skills: [String],
   projects: [{
     name: String,
     description: String,
     technologies: String,
-    link: String
+    link: String,
+    image: String
   }],
-  achievements: [String],
+  achievements: [{
+    title: String,
+    image: String
+  }],
   experience: [{
     title: String,
     company: String,
