@@ -93,6 +93,23 @@ router.post('/create', protect, async (req, res) => {
   }
 });
 
+// Get MY portfolio (Edit Mode - Pre-fill)
+router.get('/me', protect, async (req, res) => {
+  try {
+    // Find the LATEST portfolio created by this user
+    const portfolio = await Portfolio.findOne({ userId: req.user._id }).sort({ createdAt: -1 });
+
+    if (!portfolio) {
+      return res.status(404).json({ message: 'No portfolio found' });
+    }
+
+    res.json(portfolio);
+  } catch (error) {
+    console.error('Error fetching my portfolio:', error);
+    res.status(500).json({ message: 'Error fetching my portfolio', error: error.message });
+  }
+});
+
 // Get portfolio by unique URL (Public)
 router.get('/:uniqueUrl', async (req, res) => {
   try {
