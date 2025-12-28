@@ -38,16 +38,20 @@ router.post('/create', protect, async (req, res) => {
   try {
     const {
       name, about, profileImage, skills, projects, achievements,
-      experience, socialLinks, theme, resume, stats
+      experience, socialLinks, theme, resume, stats, isNewVersion // Added isNewVersion flag
     } = req.body;
 
-    console.log('💼 Creating/Updating portfolio for user:', req.user._id);
+    console.log('💼 Creating/Updating portfolio for user:', req.user._id, 'New Version:', isNewVersion);
 
-    // Check if portfolio exists
-    let portfolio = await Portfolio.findOne({ userId: req.user._id });
+    // Check if portfolio exists (ONLY if not forcing a new version)
+    let portfolio = null;
+    // FORCE NEW: We are disabling the check to ensure every request creates a new unique link
+    // if (!isNewVersion) {
+    //   portfolio = await Portfolio.findOne({ userId: req.user._id }).sort({ createdAt: -1 });
+    // }
 
-    // Generate unique URL if new
-    const uniqueUrl = portfolio ? portfolio.uniqueUrl : nanoid(10);
+    // Generate unique URL if new (or forcing new)
+    const uniqueUrl = nanoid(10); // ALWAYS generate new ID
 
     const portfolioData = {
       userId: req.user._id,
@@ -66,17 +70,11 @@ router.post('/create', protect, async (req, res) => {
       isPublished: true
     };
 
-    if (portfolio) {
-      // Update
-      portfolio = await Portfolio.findOneAndUpdate(
-        { userId: req.user._id },
-        portfolioData,
-        { new: true }
-      );
-    } else {
-      // Create
-      portfolio = await Portfolio.create(portfolioData);
-    }
+    // ALWAYS Create new
+    portfolio = await Portfolio.create(portfolioData);
+
+    // Removed Update Logic
+    // if (portfolio) { ... } else { ... }
 
     console.log('✅ Portfolio saved:', uniqueUrl);
 
