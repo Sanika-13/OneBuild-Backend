@@ -1,9 +1,56 @@
 const express = require('express');
 const router = express.Router();
-const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-// Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'AIzaSyD9YVOTk6HZhgbqpY5N4G_SGmgcZHLhYeU');
+// Mock AI Response Generator (for demo)
+function generateMockResponse(message, portfolioData) {
+    const msg = message.toLowerCase();
+
+    // Skills question
+    if (msg.includes('skill') || msg.includes('technology') || msg.includes('tech')) {
+        const skills = portfolioData.skills?.join(', ') || 'various technologies';
+        return `${portfolioData.name} is proficient in ${skills}. They have hands-on experience with these technologies across multiple projects!`;
+    }
+
+    // Projects question
+    if (msg.includes('project')) {
+        if (portfolioData.projects && portfolioData.projects.length > 0) {
+            const bestProject = portfolioData.projects[0];
+            return `${portfolioData.name}'s standout project is "${bestProject.name}" - ${bestProject.description}. It was built using ${bestProject.technologies}.`;
+        }
+        return `${portfolioData.name} has worked on several impressive projects showcasing their technical skills!`;
+    }
+
+    // Experience question
+    if (msg.includes('experience') || msg.includes('work')) {
+        if (portfolioData.experience && portfolioData.experience.length > 0) {
+            const exp = portfolioData.experience[0];
+            return `${portfolioData.name} has ${exp.duration} of experience as ${exp.title} at ${exp.company}, where they ${exp.description}`;
+        }
+        return `${portfolioData.name} has valuable professional experience in software development.`;
+    }
+
+    // About/Background question
+    if (msg.includes('about') || msg.includes('who') || msg.includes('background')) {
+        return portfolioData.about || `${portfolioData.name} is a skilled developer with expertise in modern web technologies.`;
+    }
+
+    // Contact question
+    if (msg.includes('contact') || msg.includes('email') || msg.includes('reach')) {
+        const email = portfolioData.socialLinks?.email || 'their email';
+        return `You can reach ${portfolioData.name} at ${email}. They're also available on GitHub and LinkedIn!`;
+    }
+
+    // Achievements question
+    if (msg.includes('achievement') || msg.includes('award')) {
+        if (portfolioData.achievements && portfolioData.achievements.length > 0) {
+            return `${portfolioData.name} has achieved: ${portfolioData.achievements.slice(0, 2).join(', ')}`;
+        }
+        return `${portfolioData.name} has several notable achievements in their career!`;
+    }
+
+    // Default response
+    return `${portfolioData.name} is a talented developer with strong skills in ${portfolioData.skills?.slice(0, 3).join(', ') || 'web development'}. Feel free to ask about their skills, projects, or experience!`;
+}
 
 // POST /api/chat - Chat with portfolio AI
 router.post('/', async (req, res) => {
@@ -14,44 +61,11 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: 'Message and portfolio data are required' });
         }
 
-        // Create context from portfolio data
-        const context = `
-You are an AI assistant for ${portfolioData.name}'s portfolio website.
+        // Generate mock response for demo
+        const reply = generateMockResponse(message, portfolioData);
 
-About ${portfolioData.name}:
-${portfolioData.about || 'No description available'}
-
-Skills: ${portfolioData.skills?.join(', ') || 'Not specified'}
-
-Projects:
-${portfolioData.projects?.map(p => `- ${p.name}: ${p.description} (Technologies: ${p.technologies})`).join('\n') || 'No projects listed'}
-
-Experience:
-${portfolioData.experience?.map(e => `- ${e.title} at ${e.company} (${e.duration}): ${e.description}`).join('\n') || 'No experience listed'}
-
-Achievements:
-${portfolioData.achievements?.map(a => typeof a === 'string' ? `- ${a}` : `- ${a.title}`).join('\n') || 'No achievements listed'}
-
-Social Links:
-- Email: ${portfolioData.socialLinks?.email || 'Not provided'}
-- GitHub: ${portfolioData.socialLinks?.github || 'Not provided'}
-- LinkedIn: ${portfolioData.socialLinks?.linkedin || 'Not provided'}
-
-Instructions:
-- Answer questions about ${portfolioData.name} professionally and concisely
-- Use the information provided above
-- Be friendly and helpful
-- Keep responses under 100 words
-- If asked about something not in the data, politely say you don't have that information
-`;
-
-        // Get AI model - using gemini-pro (stable model)
-        const model = genAI.getGenerativeModel({ model: 'models/gemini-pro' });
-
-        // Generate response
-        const result = await model.generateContent(context + '\n\nQuestion: ' + message);
-        const response = await result.response;
-        const reply = response.text();
+        // Simulate AI delay for realistic feel
+        await new Promise(resolve => setTimeout(resolve, 800));
 
         res.json({ reply });
 
