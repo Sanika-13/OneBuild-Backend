@@ -16,7 +16,17 @@ const connectDB = async () => {
 };
 connectDB();
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'https://one-build-front.vercel.app',
+    'https://one-build-front-git-main-sanikas-projects-fbbeca0.vercel.app',
+    'https://one-build-front-*.vercel.app'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use("/uploads", express.static("uploads"));
