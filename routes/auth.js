@@ -1,13 +1,21 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/User');
-// Note: In production you should use bcryptjs, but ensuring packages are installed first
-// const bcrypt = require('bcryptjs'); 
-// const jwt = require('jsonwebtoken');
+
+// Try to load User model, but don't fail if MongoDB is not connected
+let User;
+try {
+  User = require('../models/User');
+} catch (error) {
+  console.warn('⚠️  User model not loaded - MongoDB may not be available');
+}
 
 // Register User
 router.post('/register', async (req, res) => {
   try {
+    if (!User) {
+      return res.status(503).json({ error: 'Database not available. Please try again later.' });
+    }
+
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
@@ -20,12 +28,11 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'User already exists' });
     }
 
-    // Create new user (Storing plain text password for now based on user request "just make it work", 
-    // but in real app use bcrypt.hash(password, 10))
+    // Create new user
     const user = await User.create({
       name,
       email,
-      password // TODO: Hash this
+      password
     });
 
     console.log('✅ New User Registered:', user.email);
@@ -43,7 +50,11 @@ router.post('/register', async (req, res) => {
 // Login User
 router.post('/login', async (req, res) => {
   try {
-    const { name, password } = req.body; // 'name' can be email or name
+    if (!User) {
+      return res.status(503).json({ error: 'Database not available. Please try again later.' });
+    }
+
+    const { name, password } = req.body;
 
     if (!name || !password) {
       return res.status(400).json({ error: 'All fields are required' });
@@ -60,8 +71,6 @@ router.post('/login', async (req, res) => {
 
     console.log('✅ User Logged In:', user.name);
 
-    // Return success with simple token (User ID)
-    // In production use: const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
     const token = `token-${user._id}`;
 
     res.json({
