@@ -5,6 +5,44 @@ const router = express.Router();
 function generateMockResponse(message, portfolioData) {
     const msg = message.toLowerCase();
 
+    // Strength/Analysis question - INTELLIGENT RESPONSE
+    if (msg.includes('strength') || msg.includes('strong') || msg.includes('best at') || msg.includes('good at')) {
+        const skills = portfolioData.skills || [];
+        const projects = portfolioData.projects || [];
+        const experience = portfolioData.experience || [];
+
+        let strengths = [];
+
+        // Analyze technical breadth
+        if (skills.length >= 5) {
+            strengths.push(`diverse technical expertise across ${skills.length} technologies`);
+        } else if (skills.length > 0) {
+            strengths.push(`focused expertise in ${skills.slice(0, 3).join(', ')}`);
+        }
+
+        // Analyze project delivery
+        if (projects.length >= 3) {
+            strengths.push(`proven track record with ${projects.length}+ completed projects`);
+        }
+
+        // Analyze experience depth
+        if (experience.length > 0) {
+            strengths.push(`practical industry experience`);
+        }
+
+        // Check for full-stack capability
+        const frontendSkills = skills.filter(s => /react|vue|angular|html|css|javascript/i.test(s));
+        const backendSkills = skills.filter(s => /node|python|java|express|django|flask/i.test(s));
+        if (frontendSkills.length > 0 && backendSkills.length > 0) {
+            strengths.push(`full-stack development capability`);
+        }
+
+        if (strengths.length > 0) {
+            return `${portfolioData.name}'s key strengths include: ${strengths.join(', ')}. This combination makes them highly versatile and valuable for modern development teams.`;
+        }
+        return `${portfolioData.name} demonstrates strong technical capabilities and a continuous learning mindset.`;
+    }
+
     // Skills question
     if (msg.includes('skill') || msg.includes('technology') || msg.includes('tech')) {
         const skills = portfolioData.skills?.join(', ') || 'various technologies';
