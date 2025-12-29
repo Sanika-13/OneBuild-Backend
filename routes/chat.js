@@ -3,7 +3,7 @@ const router = express.Router();
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 // Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'AIzaSyBlRAODeGh0n12SaIPqU8nc8WJRShQ2_LY');
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'AIzaSyD9YVOTk6HZhgbqpY5N4G_SGmgcZHLhYeU');
 
 // POST /api/chat - Chat with portfolio AI
 router.post('/', async (req, res) => {
@@ -45,8 +45,8 @@ Instructions:
 - If asked about something not in the data, politely say you don't have that information
 `;
 
-        // Get AI model
-        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+        // Get AI model - using gemini-pro (stable model)
+        const model = genAI.getGenerativeModel({ model: 'models/gemini-pro' });
 
         // Generate response
         const result = await model.generateContent(context + '\n\nQuestion: ' + message);
@@ -65,3 +65,4 @@ Instructions:
 });
 
 module.exports = router;
+
