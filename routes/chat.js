@@ -43,7 +43,10 @@ function generateMockResponse(message, portfolioData) {
     // Achievements question
     if (msg.includes('achievement') || msg.includes('award')) {
         if (portfolioData.achievements && portfolioData.achievements.length > 0) {
-            return `${portfolioData.name} has achieved: ${portfolioData.achievements.slice(0, 2).join(', ')}`;
+            const achievementsList = portfolioData.achievements.slice(0, 2).map(a =>
+                typeof a === 'string' ? a : (a.title || a.name || 'Achievement')
+            ).join(', ');
+            return `${portfolioData.name} has achieved: ${achievementsList}`;
         }
         return `${portfolioData.name} has several notable achievements in their career!`;
     }
