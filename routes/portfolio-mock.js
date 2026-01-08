@@ -119,6 +119,10 @@ router.get('/:uniqueUrl', async (req, res) => {
       return res.status(404).json({ message: 'Portfolio not found' });
     }
 
+    // Increment views count
+    portfolio.views = (portfolio.views || 0) + 1;
+    await portfolio.save();
+
     res.json(portfolio);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching portfolio', error: error.message });
