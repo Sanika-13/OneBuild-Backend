@@ -6,22 +6,46 @@ const app = express();
 
 // Connect to MongoDB Atlas
 const mongoose = require("mongoose");
-const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGO_URI, {
+// MongoDB Connection Pattern for Vercel/Serverless
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
+async function connectDB() {
+  if (cached.conn) {
+    console.log('✅ Using cached MongoDB connection');
+    return cached.conn;
+  }
+
+  if (!cached.promise) {
+    const opts = {
+      bufferCommands: false, // Disable Mongoose buffering to fail fast if no connection
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
+    };
+
+    console.log('⏳ Connecting to MongoDB...');
+    cached.promise = mongoose.connect(process.env.MONGO_URI, opts).then((mongoose) => {
+      console.log('✅ New MongoDB connection established');
+      return mongoose;
     });
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
-    return conn;
-  } catch (error) {
-    console.error(`❌ Error connecting to MongoDB: ${error.message}`);
-    // Only exit in standalone mode, not in Vercel function
-    if (require.main === module) process.exit(1);
   }
-};
-// Execute connection immediately so it starts when Vercel imports the app
-connectDB();
+
+  try {
+    cached.conn = await cached.promise;
+  } catch (e) {
+    cached.promise = null;
+    console.error('❌ MongoDB Connection Error:', e);
+    throw e;
+  }
+
+  return cached.conn;
+}
+
+// Execute connection on module load, but handle promise rejection globally if needed
+connectDB().catch(console.error);
 // Middleware
 app.use(cors({
   origin: [
