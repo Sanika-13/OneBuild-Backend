@@ -13,11 +13,12 @@ app.use(cors({
     'http://localhost:3000',
     'https://one-build-front.vercel.app',
     'https://one-build-front-git-main-sanikas-projects-fbbeca0.vercel.app',
-    'https://one-build-front-*.vercel.app'
+    /\.vercel\.app$/
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  optionsSuccessStatus: 200
 }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
