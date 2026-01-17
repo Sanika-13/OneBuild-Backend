@@ -13,11 +13,15 @@ const connectDB = async () => {
       socketTimeoutMS: 45000,
     });
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    return conn;
   } catch (error) {
     console.error(`❌ Error connecting to MongoDB: ${error.message}`);
+    // If running in production/deployed, we might want to exit so the process restarts
+    // But for now, just logging is safer to keep the instance alive for logs
+    process.exit(1);
   }
 };
-connectDB();
+// connectDB(); // Removed immediate call
 // Middleware
 app.use(cors({
   origin: [
@@ -46,9 +50,13 @@ app.get("/", (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
+
 if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  // Start server only after DB connection
+  connectDB().then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
   });
 }
 
