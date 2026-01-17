@@ -16,12 +16,12 @@ const connectDB = async () => {
     return conn;
   } catch (error) {
     console.error(`❌ Error connecting to MongoDB: ${error.message}`);
-    // If running in production/deployed, we might want to exit so the process restarts
-    // But for now, just logging is safer to keep the instance alive for logs
-    process.exit(1);
+    // Only exit in standalone mode, not in Vercel function
+    if (require.main === module) process.exit(1);
   }
 };
-// connectDB(); // Removed immediate call
+// Execute connection immediately so it starts when Vercel imports the app
+connectDB();
 // Middleware
 app.use(cors({
   origin: [
