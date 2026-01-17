@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const connectDB = require("../db");
 
 // Try to load User model, but don't fail if MongoDB is not connected
 let User;
@@ -11,6 +12,7 @@ try {
 
 // Register User
 router.post('/register', async (req, res) => {
+  await connectDB(); // Ensure DB is connected before processing
   try {
     if (!User) {
       return res.status(503).json({ error: 'Database not available. Please try again later.' });
@@ -49,6 +51,7 @@ router.post('/register', async (req, res) => {
 
 // Login User
 router.post('/login', async (req, res) => {
+  await connectDB(); // Ensure DB is connected before processing
   try {
     if (!User) {
       return res.status(503).json({ error: 'Database not available. Please try again later.' });
