@@ -39,14 +39,19 @@ router.post('/register', async (req, res) => {
 
     console.log('✅ New User Registered:', user.email);
 
+    // Generate a simple token similar to the login route
+    const token = `token-${user._id}`;
+
     res.status(201).json({
       message: 'Registration successful',
+      token: token,
       user: { id: user._id, name: user.name, email: user.email }
     });
   } catch (error) {
     console.error('Register Error:', error);
     res.status(500).json({ error: error.message || 'Server error' });
   }
+
 });
 
 // Login User

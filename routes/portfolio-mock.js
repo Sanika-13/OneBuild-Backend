@@ -89,8 +89,16 @@ router.post('/create', protect, async (req, res) => {
     });
   } catch (error) {
     console.error('Error in portfolio create/update:', error);
+    
+    // Check if it's a Mongoose validation error
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(val => val.message);
+      return res.status(400).json({ message: 'Validation Error', errors: messages });
+    }
+
     res.status(500).json({ message: 'Error creating portfolio', error: error.message });
   }
+
 });
 
 // Get MY portfolio (Edit Mode - Pre-fill)
